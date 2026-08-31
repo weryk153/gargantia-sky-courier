@@ -509,40 +509,4 @@ TurbulenzEngine.onload = function onloadFn()
     </script>
 
 </body>
-</html>_game_engine_canvas');
-
-            var startCanvas = function startCanvasFn()
-            {
-                if (canvas.getContext && canvasSupported)
-                {
-                    TurbulenzEngine = WebGLTurbulenzEngine.create({
-                        canvas: canvas,
-                        fillParent: true
-                    });
-
-                    if (!TurbulenzEngine) {
-                        window.alert("Failed to init TurbulenzEngine (canvas)");
-                        return;
-                    }
-
-                    TurbulenzEngine.onload = appEntry;
-                    TurbulenzEngine.onunload = appShutdown;
-                    appEntry()
-                }
-            }
-
-            var previousOnBeforeUnload = window.onbeforeunload;
-            window.onbeforeunload = function ()
-            {
-                if (TurbulenzEngine.onunload) {
-                    TurbulenzEngine.onunload.call(this);
-                }
-            };  // window.beforeunload
-
-            startCanvas();
-        };  // window.onload()
-
-    </script>
-
-</body>
 </html>
