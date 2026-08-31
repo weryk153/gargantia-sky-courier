@@ -17,23 +17,49 @@ the clock. The full in-game level editor ships with it.
 | --- | --- |
 | Fly | `WASD` or arrow keys |
 | Boost | `Space` |
-| Editor | `Enter` (toggles in and out) |
 
-Fly through the rings in order before time runs out. The panel on the left is
-the DynamicUI debug console — expand any section to inspect and tweak the game
-while it runs. **Debug Draw → Camera** is a good first thing to try: it shows how
-the camera gets dragged around by the character.
+Fly through the rings in order before time runs out.
 
 ## The level editor
 
-Press `Enter` at any point to drop into editor mode, where you can move, rotate,
-scale, add and delete entities. Press `Enter` again to return to the game at the
-start of the level, with your changes live.
+**https://weryk153.github.io/gargantia-sky-courier/editor.html**
+
+The editor lives at its own entry point, because it is a development build: it
+loads a debug panel down the left of the page and 3.2MB of jQuery, Kendo and
+Spectrum to draw it. The game itself loads none of that.
+
+Press `Enter` there to drop into editor mode, where you can move, rotate, scale,
+add and delete entities. Press `Enter` again to return to the game at the start
+of the level, with your changes live.
 
 **Save Level** writes the level to your browser's local storage and **Load Edited
 Level** reads it back, so edits survive a reload. **Reset Level** restores the
 original mission. Nothing is uploaded anywhere — the saved level never leaves
 your machine.
+
+The panel on the left is the DynamicUI debug console: expand any section to
+inspect and tweak the game while it runs. **Debug Draw → Camera** is a good first
+thing to try — it shows how the camera gets dragged around by the character.
+
+### How the two builds differ
+
+`index.html` and `editor.html` load exactly the same engine and game code. They
+differ only in which config they load, and Turbulenz built the switches for
+this — the original file is named `configdebug.js`, which rather implies a
+sibling was expected.
+
+| | `index.html` | `editor.html` |
+| --- | --- | --- |
+| Config | `configrelease.js` | `configdebug.js` |
+| `enableEditor` | `false` | `true` |
+| `enableDynamicUI` | `false` | `true` |
+| `debugText` (FPS readout) | `false` | `true` |
+| Stylesheet | `css/game.css` | `css/base_template.css` |
+| Layout | canvas fills the window | title bar + 323px sidebar |
+
+Every `globals.dynamicUI` call site in the game is null-guarded, so switching the
+panel off is something the engine was written to support rather than something
+bolted on here.
 
 ## Running it locally
 
@@ -48,8 +74,9 @@ python3 -m http.server 8000
 npx http-server -p 8000
 ```
 
-Then open http://localhost:8000. You need a browser with WebGL — see
-[Browser support](#browser-support).
+Then open http://localhost:8000 for the game, or
+http://localhost:8000/editor.html for the editor. You need a browser with
+WebGL — see [Browser support](#browser-support).
 
 ## What was fixed
 
@@ -97,9 +124,9 @@ visible text. Removed.
 
 ## Browser support
 
-Each engine was driven through load, flight, the editor and a save/load round
-trip, watching for console errors and measuring real audio output at the
-destination node.
+Both entry points were driven through load, flight and a save/load round trip in
+the editor, on each engine, watching for console errors and measuring real audio
+output at the destination node.
 
 | Engine | Result |
 | --- | --- |
@@ -119,27 +146,32 @@ for desktop.
 
 ## How the code is organised
 
-This is a debug build, so every source file is loaded on each run — edit a file,
-reload the page, and the change is live.
+Nothing is minified or bundled: every source file is fetched on each run, so you
+can edit a file, reload the page, and see the change.
 
 | Path | |
 | --- | --- |
+| `index.html` | The game. |
+| `editor.html` | The development build, with the debug panel and the editor. |
 | `game/scripts` | The game itself. Most of what you would want to change lives here — `entitycomponents/eclocomotion.js` drives the character's movement, for instance. |
+| `game/scripts/configrelease.js` | Settings for `index.html`. |
+| `game/scripts/configdebug.js` | Settings for `editor.html`. |
 | `game/jslib` | The Turbulenz engine. |
-| `game/editor` | The in-game level editor. |
-| `game/assets` | Uncompiled source art: models, textures, sounds, shaders. The game does not read these at runtime — with one exception, `game/assets/levels`, which the editor loads the original mission from. |
+| `game/editor` | The level editor. Loaded by both pages, but only switched on when `Config.enableEditor` is true. |
+| `game/assets` | Uncompiled source art: models, textures, sounds, shaders. Not read at runtime — with one exception, `game/assets/levels`, which the editor loads the original mission from. |
 | `staticmax` | The built assets the game actually loads, under content-hashed names. |
 | `mapping_table.json` | Maps readable asset names onto those hashed filenames. |
-| `dynamicui` | The debug panel down the left of the page, and its libraries. |
-| `css`, `img` | Page styling and chrome. |
+| `dynamicui` | The debug panel and its libraries. Loaded by `editor.html` only. |
+| `css/game.css` | Layout for the game: canvas filling the window. |
+| `css/base_template.css` | Turbulenz's developer template, used by `editor.html`. |
 
 ## Licence
 
 Two licences apply, as set out in [LICENSE](LICENSE):
 
-- **Software** — `game/`, `dynamicui/`, `index.html` — is **MIT**, Copyright (c)
-  2009–2014 Turbulenz Limited. The fixes in this fork are contributed under the
-  same terms.
+- **Software** — `game/`, `dynamicui/`, `css/`, and the HTML entry points — is
+  **MIT**, Copyright (c) 2009–2014 Turbulenz Limited. The fixes in this fork are
+  contributed under the same terms.
 - **Assets** — `staticmax/`, `game/assets/`, `img/` — are **CC BY-NC 4.0**:
   attribution required, **non-commercial use only**.
 

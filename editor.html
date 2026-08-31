@@ -18,16 +18,77 @@ html, body, div, span, object, iframe, h1, h2, p, a, img, ul, li, fieldset, form
     </style>
     <!-- block tz_app_header -->
     
-    <link rel="stylesheet" type="text/css" href="css/game.css">
+    <link rel="stylesheet" type="text/css" href="css/base_template.css">
     <link rel="shortcut icon" href="img/favicon.ico">
 
-    <!-- The debug panel and its libraries are loaded by editor.html, not here. -->
+    <!-- Dynamic UI -->
+    <!-- jQuery and plugins -->
+    <link rel="Stylesheet" type="text/css"
+          href="dynamicui/lib/jquery-ui/css/ui-lightness/jquery-ui-1.10.4.min.css"/>
+    <link rel="stylesheet" type="text/css"
+          href="dynamicui/lib/jquery-tipTip/tipTip.css">
+    <script type="text/javascript"
+            src="dynamicui/lib/jquery/jquery-2.1.0.min.js"></script>
+    <script type="text/javascript"
+            src="dynamicui/lib/jquery-ui/js/jquery-ui-1.10.4.min.js"></script>
+    <script type="text/javascript"
+            src="dynamicui/lib/jquery-tipTip/jquery.tipTip.js"></script>
+
+    <!-- Kendo UI -->
+    <!--<link rel="stylesheet" type="text/css"
+          href="dynamicui/lib/kendo/kendo.common.min.css">-->
+    <!--<link rel="stylesheet" type="text/css"
+          href="dynamicui/lib/kendo/kendo.default.min.css">-->
+    <script type="text/javascript"
+            src="dynamicui/lib/kendo/kendo.web.min.js"></script>
+
+    <!-- Spectrum colorpicker -->
+    <link rel="stylesheet" type="text/css"
+          href="dynamicui/lib/spectrum/spectrum.css">
+    <link rel="stylesheet" type="text/css"
+          href="dynamicui/lib/spectrum/sp-dark.css">
+    <script type="text/javascript"
+            src="dynamicui/lib/spectrum/spectrum.js"></script>
+
+    <!--Font Awesome -->
+    <link rel="stylesheet" type="text/css"
+          href="dynamicui/lib/font-awesome/css/font-awesome.min.css">
+
+    <!-- FuelUX -->
+    <script type="text/javascript"
+            src="dynamicui/lib/fuelux/loader.min.js"></script>
+
+    <!-- Turbulenz Dynamic UI -->
+    <link rel="stylesheet" type="text/css"
+          href="dynamicui/server/dynamicui.css">
+    <script type="text/javascript"
+            src="dynamicui/server/duiserver.js"></script>
 
 
     <!-- end tz_app_header -->
 </head>
-<body>
-    <div id="engine">
+<body style="background:#B4B4B4;font:normal normal normal 13px/1.231 Helvetica,Arial,sans-serif;text-shadow:1px 1px #F9F8F8;">
+    <div id="titlebar" style="position:fixed;height:65px;top:0;right:0;left:0;">
+        <strong style="font-size:24px;line-height:64px;margin:16px;">
+            <!-- block tz_app_title_name -->
+            Turbulenz: <a href="http://docs.turbulenz.com" target="_blank">Docs</a> <a href="https://github.com/turbulenz/turbulenz_engine" target="_blank">Engine</a>
+            <!-- end tz_app_title_name -->
+        </strong>
+        <div id="titlelogo"
+             style="float:right;width:27px;height:27px;margin:18px 24px;">
+        </div>
+    </div>
+    <div id="sidebar"
+         style="background:#B4B4B4;position:fixed;width:303px;top:65px;left:0;">
+        <!-- block tz_app_html_controls -->
+        
+<div id="dynamicui" class="dynamicui"></div>
+
+        <!-- end tz_app_html_controls -->
+    </div>
+    <div id="engine" style="background:#939393;position:fixed;top:65px;
+                            bottom:0;right:0;left:303px;
+                            border-left:1px solid #898989;">
         <!--
           HTML to create a plugin or canvas instance.
           Supplied by 'tz_engine_div' variable.
@@ -92,7 +153,7 @@ html, body, div, span, object, iframe, h1, h2, p, a, img, ul, li, fieldset, form
 <script type="text/javascript" src="game/jslib/webgl/tarloader.js"></script>
 <script type="text/javascript" src="game/jslib/webgl/inputdevice.js"></script>
 <script type="text/javascript" src="game/jslib/webgl/physicsdevice.js"></script>
-<script type="text/javascript" src="game/scripts/configrelease.js"></script>
+<script type="text/javascript" src="game/scripts/configdebug.js"></script>
 <script type="text/javascript" src="game/jslib/animation.js"></script>
 <script type="text/javascript" src="game/jslib/animationmanager.js"></script>
 <script type="text/javascript" src="game/jslib/assettracker.js"></script>
@@ -119,6 +180,7 @@ html, body, div, span, object, iframe, h1, h2, p, a, img, ul, li, fieldset, form
 <script type="text/javascript" src="game/jslib/services/mappingtable.js"></script>
 <script type="text/javascript" src="game/jslib/services/turbulenzbridge.js"></script>
 <script type="text/javascript" src="game/jslib/services/turbulenzservices.js"></script>
+<script type="text/javascript" src="dynamicui/client/duimanager.js"></script>
 <script type="text/javascript" src="game/scripts/block.js"></script>
 <script type="text/javascript" src="game/scripts/blockfactory.js"></script>
 <script type="text/javascript" src="game/scripts/controlleraction.js"></script>

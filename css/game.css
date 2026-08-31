@@ -1,0 +1,36 @@
+/*
+ * Styles for index.html -- the game on its own, filling the window.
+ *
+ * editor.html uses base_template.css instead, which is Turbulenz's developer
+ * template: a title bar, a 323px sidebar for the debug panel, and an engine
+ * pane in what is left. None of that applies here, and its #engine rules are
+ * !important, so this is a separate file rather than an override.
+ */
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+}
+
+#engine {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: #000;
+}
+
+#turbulenz_game_engine_canvas {
+    display: block;
+    outline: none;
+}
+
+/* Shown only if WebGL is missing -- the canvas fallback content. */
+#turbulenz_game_engine_canvas a {
+    color: #6cf;
+}
