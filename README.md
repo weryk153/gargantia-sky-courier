@@ -7,11 +7,14 @@ This repository contains all the code required to run and edit the first mission
 
 ## Modernisation
 
-This is a fork of Turbulenz's original 2014 release, patched so that it still
-runs in a current browser. The engine is otherwise untouched. See
-[What was fixed](#what-was-fixed) for the details.
+This is a fork of
+[turbulenz/gargantia_editor](https://github.com/turbulenz/gargantia_editor),
+Turbulenz's original 2014 release, patched so that it still runs in a current
+browser. The upstream repository has not been touched since June 2014. The
+engine is otherwise as they shipped it -- see
+[What was fixed](#what-was-fixed) for every change.
 
-Play it at **https://weryk153.github.io/gargantia_editor/**
+Play it at **https://weryk153.github.io/gargantia-sky-courier/**
 
 ## Installation
 
