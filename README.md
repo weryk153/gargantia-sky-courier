@@ -5,49 +5,50 @@
 
 This repository contains all the code required to run and edit the first mission of [Gargantia: Sky Courier](http://fly.gargantia.jp) a 3D arcade flight simulator based on the [Turbulenz Engine](http://github.com/turbulenz/turbulenz_engine). The developer teardown article on [Modern.IE](http://www.modern.ie/en-us/demos/gargantia) gives an introduction to the project and the technology, while this README contains all the technical info you need to get up and running!
 
+## Modernisation
+
+This is a fork of Turbulenz's original 2014 release, patched so that it still
+runs in a current browser. The engine is otherwise untouched. See
+[What was fixed](#what-was-fixed) for the details.
+
+Play it at **https://weryk153.github.io/gargantia_editor/**
+
 ## Installation
 
-To get started all you need is the code in this repository and a simple web server. First of all download this code to your computer either using git clone, or if you don't have git installed by clicking on the link to the right of this page to download the code in a zip file. Make a note of where you unpack the code or clone the repository - we will refer to that directory as the **project root** directory in the next steps.
+All you need is the code in this repository and any static web server -- there
+is no build step and no dependencies to install. Download the code either with
+`git clone`, or as a zip file from the green **Code** button at the top of this
+page. We will refer to the directory you end up with as the **project root**.
 
 ## Running a web server
 
-To actually see the code running you will need two things, a web server and a modern web browser that supports WebGL, such as Internet Explorer 11, Chrome or Firefox. If you have a simple web server already installed then you just need to point it at the root directory, there is an index.html file that will load and run the project. If not then you can try either of these simple options:
+You need a static web server and a browser with WebGL support. Chrome, Edge and
+Firefox are all fine; see [Browser support](#browser-support) below for the
+current state of Safari.
 
-### Python: SimpleHTTPServer
+### Python
 
-First of all install Python (for best results we recommend using Python 2.7 32 bit) on your system (installers for most systems can be [found here](http://python.org)). Once python is installed, open a command line and navigate to the **project root** directory then simply run:
-
-```
-python -m SimpleHTTPServer
-```
-
-If installing python did not add it to your system path then you may need to explicitly give the path to your python interpreter, for example:
+Python 3 ships with macOS and most Linux distributions, and is
+[available for Windows here](https://www.python.org/downloads/). From the
+**project root**, run:
 
 ```
-c:\Python27\python -m SimpleHTTPServer
+python3 -m http.server 8000
 ```
 
-Your firewall may ask for permission to allow python to access the network - you will need to allow this to be able to access the webserver from your browser.
+### Node.js
 
-### Node.js: http-server
-
-To use the node http server, first of all install node.js on your system (installers for most systems can be [found here](http://nodejs.org)). Once node is installed, install the simple Http Server module using npm. Simply open up a command line and run:
-
-```
-npm install http-server -g
-```
-
-Then navigate to the **project root** directory and run
+With [Node.js](https://nodejs.org) installed, run this from the **project
+root** -- no separate install step needed:
 
 ```
-http-server -p 8000
+npx http-server -p 8000
 ```
-
-Your firewall may ask for permission to allow node.js to access the network - you will need to allow this to be able to access the webserver from your browser.
 
 ### Running the sample
 
-With your chosen web server running you simply need to open a web browser and navigate to http://localhost:8000
+With your chosen web server running, open http://localhost:8000 in your
+browser.
 
 ## The Game
 
@@ -89,9 +90,83 @@ The code is organised into several directories:
 
 Most of the interesting code you will want to experiment with is in the **game/scripts** directory. Here you can find files such as **game/scripts/entitycomponents/eclocomotion.js** that controls the movement of the main character.
 
+## What was fixed
+
+The game was written in 2014 and stopped working correctly as browsers moved on.
+Three changes were needed; the engine is otherwise as Turbulenz shipped it.
+
+**Skinned animation crashed on load** --
+`game/jslib/webgl/graphicsdevice.js`
+
+`setData` and `unmap` for technique parameter buffers were installed inside a
+`if (Float32Array.prototype.map === undefined)` guard. Since ES2015 every browser
+ships a native `TypedArray.prototype.map`, so the guard was always false and
+neither helper was ever installed. Both `animation.js` (skinning matrices) and
+`forwardrendering.js` (light parameters) call `setData`, so uploading a character
+pose threw `output.setData is not a function`. Each helper now feature-detects
+itself. The engine's own `map` -- which took `(offset, numFloats)` rather than a
+callback -- is deliberately not reinstated: nothing calls it on these buffers,
+and overwriting the native `map` would break standard behaviour elsewhere.
+
+**The game ran completely silent** --
+`game/jslib/webgl/sounddevice.js`
+
+Browsers now refuse to start audio until the user has interacted with the page,
+and they refuse in two separate ways. An `AudioContext` is created in the
+`suspended` state, and `HTMLMediaElement.play()` returns a promise that rejects
+with `NotAllowedError`. The engine predates both: it never called `resume()`, and
+it ignored the promise from `play()`, which additionally surfaced as unhandled
+page errors in Firefox. A small `autoplayUnlock` helper now recovers both on the
+first real user gesture -- the buffered sound effects and the streamed music
+alike.
+
+**`index.html` had a corrupted tail**
+
+Everything after `</html>` was a duplicate of the last 35 lines of the
+`window.onload` handler, left over from a bad copy-paste. Browsers were lenient
+enough to render it as a stray text node rather than fail, but it was dead
+markup and it leaked engine source onto the page. Removed.
+
+## Browser support
+
+Verified by driving each engine through load, flight, the level editor and a
+save/load round trip, checking for console errors and measuring actual audio
+output at the destination node.
+
+| Engine | Result |
+| --- | --- |
+| Chrome / Edge | 60 FPS, no console errors, audio confirmed |
+| Firefox | 61 FPS, no console errors, audio confirmed |
+| WebKit (Safari) | 51 FPS, no console errors, audio confirmed |
+
+The textures ship as DDS files using S3TC block compression, which was the one
+real risk for Safari -- but WebKit does expose
+`WEBGL_compressed_texture_s3tc`, and the game renders correctly there.
+
+WebKit reports its `AudioContext` as `interrupted` rather than `suspended` when
+the audio session is unavailable, which the autoplay fix treats the same way.
+
+The WebKit figures come from Playwright's WebKit build, not Safari.app; they are
+a good signal for the engine but not a substitute for testing on a real device.
+iOS is untested -- the game has touch controls but was built for desktop.
+
 ## License
 
-The software in this repository is provided under the conditions specified in the [LICENSE](LICENSE) file
+Two different licences apply, as set out in the [LICENSE](LICENSE) file:
+
+- **Software** (everything under `game/`, `dynamicui/`, and `index.html`) is
+  **MIT**, Copyright (c) 2009-2014 Turbulenz Limited. The compatibility fixes in
+  this fork are contributed under the same licence.
+- **Assets** (textures, models, sounds -- everything under `staticmax/`,
+  `game/assets/` and `img/`) are **CC BY-NC 4.0**: attribution required,
+  **non-commercial use only**.
+
+The non-commercial restriction on the assets is the binding constraint. This
+repository, and any deployment of it, must not be used commercially -- no ads,
+no sale, no monetisation.
+
+Gargantia on the Verdurous Planet is the property of Production I.G; the assets
+here were released by Turbulenz under the terms above.
 
 ## Links
 
