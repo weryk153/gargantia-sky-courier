@@ -3458,36 +3458,18 @@ var WebGLTechniqueParameters = (function () {
 // TechniqueParameterBuffer
 //
 var techniqueParameterBufferCreate = function techniqueParameterBufferCreateFn(params) {
-    if (Float32Array.prototype.map === undefined) {
-        Float32Array.prototype.map = function techniqueParameterBufferMap(offset, numFloats) {
-            if (offset === undefined) {
-                offset = 0;
-            }
-            var buffer = this;
-            if (numFloats === undefined) {
-                numFloats = this.length;
-            }
-            function techniqueParameterBufferWriter() {
-                var numArguments = arguments.length;
-                for (var a = 0; a < numArguments; a += 1) {
-                    var value = arguments[a];
-                    if (typeof value === 'number') {
-                        buffer[offset] = value;
-                        offset += 1;
-                    } else {
-                        buffer.setData(value, offset, value.length);
-                        offset += value.length;
-                    }
-                }
-            }
-            return techniqueParameterBufferWriter;
-        };
-
-        /* tslint:disable:no-empty */
-        Float32Array.prototype.unmap = function techniqueParameterBufferUnmap(writer) {
-        };
-
-        /* tslint:enable:no-empty */
+    // Modernisation fix: setData and unmap used to be installed inside a
+    // `if (Float32Array.prototype.map === undefined)` guard. Since ES2015 every
+    // browser ships a native TypedArray.prototype.map, so that guard is now always
+    // false and neither helper was ever installed -- breaking skinned animation
+    // (animation.js) and forward lighting (forwardrendering.js), which both call
+    // setData on these buffers. Each helper now feature-detects itself.
+    //
+    // The engine's own `map` is deliberately not reinstated: it took (offset,
+    // numFloats) rather than a callback, no caller uses it on a technique
+    // parameter buffer, and overwriting the native map would break standard
+    // behaviour everywhere else.
+    if (Float32Array.prototype.setData === undefined) {
         Float32Array.prototype.setData = function techniqueParameterBufferSetData(data, offset, numValues) {
             if (offset === undefined) {
                 offset = 0;
@@ -3499,6 +3481,14 @@ var techniqueParameterBufferCreate = function techniqueParameterBufferCreateFn(p
                 this[offset] = data[n];
             }
         };
+    }
+
+    if (Float32Array.prototype.unmap === undefined) {
+        /* tslint:disable:no-empty */
+        Float32Array.prototype.unmap = function techniqueParameterBufferUnmap(writer) {
+        };
+
+        /* tslint:enable:no-empty */
     }
 
     return new Float32Array(params.numFloats);
