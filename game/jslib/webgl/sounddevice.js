@@ -17,6 +17,74 @@ var __extends = this.__extends || function (d, b) {
 ;
 
 //
+// Autoplay policy support
+//
+// Modernisation fix: when this engine was written a page could start audio at
+// any time. Browsers now refuse to until the user has interacted with the page,
+// and they refuse in two separate ways -- an AudioContext is created in the
+// 'suspended' state, and HTMLMediaElement.play() returns a promise that rejects
+// with NotAllowedError. Nothing here handled either case, so the game ran silent
+// and the rejected play() promises surfaced as unhandled page errors.
+//
+// Both are recovered on the first real user gesture. The listeners are cheap and
+// are left installed, so audio started later and refused again still recovers.
+//
+var autoplayUnlock = (function autoplayUnlockFn() {
+    var blockedAudioElements = [];
+    var audioContexts = [];
+    var listening = false;
+
+    function playElement(audio) {
+        var playing = audio.play();
+        if (playing && playing.catch) {
+            playing.catch(function onPlayRejected() {
+                if (blockedAudioElements.indexOf(audio) === -1) {
+                    blockedAudioElements.push(audio);
+                }
+                listen();
+            });
+        }
+    }
+
+    function onUserGesture() {
+        var i;
+
+        for (i = 0; i < audioContexts.length; i += 1) {
+            // 'suspended' is the autoplay-policy state; WebKit also uses
+            // 'interrupted' when the audio session was taken away. Both resume.
+            if (audioContexts[i].state !== 'running') {
+                audioContexts[i].resume();
+            }
+        }
+
+        var blocked = blockedAudioElements;
+        blockedAudioElements = [];
+        for (i = 0; i < blocked.length; i += 1) {
+            playElement(blocked[i]);
+        }
+    }
+
+    function listen() {
+        if (listening) {
+            return;
+        }
+        listening = true;
+        window.addEventListener('pointerdown', onUserGesture, true);
+        window.addEventListener('keydown', onUserGesture, true);
+    }
+
+    return {
+        playElement: playElement,
+        registerContext: function registerContextFn(audioContext) {
+            audioContexts.push(audioContext);
+            if (audioContext.state !== 'running') {
+                listen();
+            }
+        }
+    };
+}());
+
+//
 // WebGLSound
 //
 var WebGLSound = (function () {
@@ -71,7 +139,7 @@ var WebGLSound = (function () {
             };
             audio.addEventListener('play', forceLoading, false);
             audio.volume = 0;
-            audio.play();
+            autoplayUnlock.playElement(audio);
         }
     };
 
@@ -478,7 +546,7 @@ var WebGLSoundGlobalSource = (function () {
                 if (this.updateAudioVolume) {
                     this.updateAudioVolume();
                 }
-                soundAudio.play();
+                autoplayUnlock.playElement(soundAudio);
             }
         }
 
@@ -570,7 +638,7 @@ var WebGLSoundGlobalSource = (function () {
                     }
                 }
 
-                audio.play();
+                autoplayUnlock.playElement(audio);
             } else {
                 var audioContext = this.audioContext;
                 if (audioContext) {
@@ -823,7 +891,7 @@ var WebGLSoundGlobalSource = (function () {
                     if (audio) {
                         if (this.looping) {
                             audio.currentTime = 0;
-                            audio.play();
+                            autoplayUnlock.playElement(audio);
                         } else {
                             source.stop();
                         }
@@ -996,7 +1064,7 @@ var WebGLSoundSource = (function (_super) {
                     if (audio) {
                         if (this.looping) {
                             audio.currentTime = 0;
-                            audio.play();
+                            autoplayUnlock.playElement(audio);
                         } else {
                             source.stop();
                         }
@@ -1310,6 +1378,10 @@ var WebGLSoundDevice = (function () {
             sd.renderer = 'WebAudio';
             sd.audioContext = audioContext;
             sd.frequency = audioContext.sampleRate;
+
+            // See the autoplay policy note at the top of this file: the context
+            // starts suspended and only resumes on a real user gesture.
+            autoplayUnlock.registerContext(audioContext);
 
             sd._gainNode = (audioContext.createGain ? audioContext.createGain() : audioContext.createGainNode());
             sd._gainNode.connect(audioContext.destination);
