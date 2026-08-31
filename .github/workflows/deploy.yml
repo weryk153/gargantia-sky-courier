@@ -24,28 +24,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Assemble site
-        # game/assets holds the uncompiled source art (~29MB of .dae/.dds/.ogg).
-        # The game only ever loads the built versions under staticmax/, so the
-        # sources are kept in the repository but left out of the deployment.
-        run: |
-          mkdir -p _site
-          rsync -a \
-            --exclude '.git' \
-            --exclude '.github' \
-            --exclude '_site' \
-            --exclude 'game/assets' \
-            ./ _site/
-          touch _site/.nojekyll
-
       - uses: actions/configure-pages@v5
         with:
-          # Turn Pages on if it is not already, so a fresh clone deploys unattended.
+          # Turn Pages on if it is not already, so a fresh fork deploys unattended.
           enablement: true
 
+      # The whole repository is published as-is. An earlier version of this
+      # workflow left out game/assets to save ~29MB, on the grounds that the game
+      # loads the built assets from staticmax/ -- but the editor reads the
+      # original level JSON from game/assets/levels, so that broke it in
+      # production. At 76MB against a 1GB limit the saving is not worth the risk.
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: .
 
       - id: deployment
         uses: actions/deploy-pages@v4
